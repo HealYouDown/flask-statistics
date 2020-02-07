@@ -65,6 +65,6 @@ Now, whenever a user requests an endpoint, it will be stored in the defined mode
 |user_agent|```str```|The User-Agent that was send with the request.|
 |remote_address|```str```|The ip address of the client.|
 |exception|```str```|If an error occured, this field will have the error message and the status_code will automatically be 500. <br/>Example: ```ZeroDivisionError('division by zero')```|
-|referrer|```str```|Link to the website that referred the user to the endpoint|
+|referrer|```str```|Link to the website that referred the user to the endpoint.|
 |browser|```str```|The browser that was used to send the request. <br/> Example: ```firefox 72.0```|
 |platform|```str```|Operating System the request was send from.|
