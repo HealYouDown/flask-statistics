@@ -36,6 +36,7 @@ class Request(db.Model):
     referrer = db.Column(db.String)
     browser = db.Column(db.String)
     platform = db.Column(db.String)
+    mimetype = db.Column(db.String)
 
 statistics = Statistics(app, db, Request)
 
@@ -68,3 +69,4 @@ Now, whenever a user requests an endpoint, it will be stored in the defined mode
 |referrer|```str```|Link to the website that referred the user to the endpoint.|
 |browser|```str```|The browser that was used to send the request. <br/> Example: ```firefox 72.0```|
 |platform|```str```|Operating System the request was send from.|
+|mimetype|```str```|Mimetype of the response send to the client (e.g. html/text).|

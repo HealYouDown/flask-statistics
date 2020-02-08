@@ -51,6 +51,7 @@ class Statistics:
     ) -> Response:
         g.request_status_code = response.status_code
         g.request_content_size = response.content_length
+        g.mimetype = response.mimetype
 
         return response
 
@@ -60,8 +61,6 @@ class Statistics:
     ) -> None:
         # Take time when request ended
         end_time = time.time()
-
-        print(request.environ.keys())
 
         # Create object that is later stored in database
         obj = {}
@@ -90,6 +89,8 @@ class Statistics:
         obj["user_agent"] = request.user_agent.string
         # date when request was send
         obj["date"] = g.request_date
+        # mimetype (e.g. text/html) of the response send to the client
+        obj["mimetype"] = g.mimetype
         # exception (if there was one)
         obj["exception"] = None if exception is None else repr(exception)
 
