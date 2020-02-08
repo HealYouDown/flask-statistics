@@ -61,6 +61,8 @@ class Statistics:
         # Take time when request ended
         end_time = time.time()
 
+        print(request.environ.keys())
+
         # Create object that is later stored in database
         obj = {}
 
@@ -73,7 +75,7 @@ class Statistics:
         # used method (PUT, PATCH, GET, POST, ...)
         obj["method"] = request.method
         # ip address
-        obj["remote_address"] = request.remote_addr
+        obj["remote_address"] = request.environ.get("HTTP_X_REAL_IP", request.remote_addr)
         # requested path (e.g. /homepage, /about, ...)
         obj["path"] = request.path
         # page that linked to requested page
