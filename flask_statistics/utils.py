@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 from collections import defaultdict
 from typing import List, Tuple
@@ -13,7 +11,7 @@ class StatisticsQueries:
         self,
         db: SQLAlchemy,
         model: Model
-    ) -> StatisticsQueries:
+    ) -> "StatisticsQueries":
         self.db = db
         self.model = model
 
