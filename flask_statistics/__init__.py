@@ -86,7 +86,7 @@ class Statistics:
             unique_users = self.api.get_number_of_unique_visitors(start_date,
                                                                  end_date)
 
-            return render_template("index.html",
+            return render_template("flask_statistics_index.html",
                                    routes=routes,
                                    hits=hits,
                                    unique_users=unique_users,
@@ -104,7 +104,7 @@ class Statistics:
                                                        end_date,
                                                        path)
 
-        return render_template("single_view.html",
+        return render_template("flask_statistics_single_view.html",
                                path=path,
                                requests=requests,
                                user_chart_data=user_chart_data,

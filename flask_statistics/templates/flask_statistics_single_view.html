@@ -1,7 +1,6 @@
-{%- extends "_layout.html" -%}
+{%- extends "flask_statistics_layout.html" -%}
 
 {%- block content -%}
-
 <div class="form-row justify-content-md-center">
   <div class="form-group col-md-3">
     <label for="startDate">Start Date</label>
@@ -20,101 +19,47 @@
   <div class="col-md-8">
     <canvas id="userChart"></canvas>
   </div>
-  <div class="col-md-2">
-    <div class="box red shadow">
-      <div class="content">
-        <span class="label">Hits</span>
-        <span class="number">{{hits}}</span>
-      </div>
-    </div>
-    <div class="box blue shadow">
-      <div class="content">
-        <span class="label">Unique Users</span>
-        <span class="number">{{unique_users}}</span>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="row justify-content-md-center">
-  <div class="col-md-10">  
-    <table class="table table-bordered">
+  <div class="col-md-8">
+    <table class="table table-sm table-bordered">
       <thead>
         <tr>
           <th>URL</th>
-          <th>Hits</th>
-          <th>Unique Hits</th>
-          <th>Last requested</th>
-          <th>Avg. Duration</th>
+          <th>Method</th>
+          <th>Mimetype</th>
+          <th>Status</th>
+          <th>Size</th>
+          <th>Duration</th>
+          <th>Date</th>
         </tr>
       </thead>
       <tbody>
-        {%- for route in routes -%}
+        {%- for request in requests -%}
         <tr>
-          <td><a href="{{url_for('statistics.index', path=route.path)}}">{{route.path}}</a></td>
-          <td>{{route.hits}}</td>
-          <td>{{route.unique_hits}}</td>
-          <td>{{route.last_requested.strftime("%Y-%m-%d %H:%M:%S")}}</td>
-          <td>{{route.average_response_time|round(5)}} s</td>
+          <td>{{request.path}}</td>
+          <td>{{request.method}}</td>
+          <td>{{request.mimetype}}</td>
+          <td>
+            {%- set status = request.status_code -%}
+            {%- if 200 <= status < 300 -%}
+              <span class="text-success">{{status}}</span>
+            {%- elif 400 <= status < 600 -%}
+              <span class="text-danger">{{status}}</span>
+            {%- else -%}
+              {{status}}
+            {%- endif -%}
+          </td>
+          <td>{{request.size|filesizeformat}}</td>
+          <td>{{request.response_time|round(5)}} s</td>
+          <td>{{request.date.strftime("%Y-%m-%d %H:%M:%S")}}</td>
         </tr>
         {%- endfor -%}
       </tbody>
     </table>
   </div>
 </div>
-
-<style>
-  .box {
-    border-radius: 5px;
-    width: 100%;
-    position: relative;
-    display: inline-block;
-  }
-
-  .box.blue {
-    background-color: #2196F3;
-  }
-
-  .box.red {
-    background-color: #E91E63;
-  }
-
-  .box:before {
-    content: "";
-    display: block;
-    padding-top: 100%;
-  }
-
-  .box .content {
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    position: absolute;
-  }
-
-  .box .content .label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    font-size: 20px;
-    color: white;
-    margin-left: 15px;
-    margin-top: 15px;
-  }
-
-  .box .content .number {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    font-size: 50px;
-    color: white;
-    margin-bottom: 15px;
-    margin-right: 20px;
-  }
-
-
-</style>
 
 <script>
   function onUpdateClick() {
@@ -159,7 +104,7 @@
       title: {
         display: true,
         position: "top",
-        text: "Hits for all routes"
+        text: "Hits for {{path}}"
       },
       animation: false,
       scales: {
