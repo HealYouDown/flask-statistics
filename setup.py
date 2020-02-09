@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="flask-statistics",
-    version="0.0.6",
+    version="0.0.7",
     author="HealYouDown",
     description="Package to collect statistics in Flask.",
     long_description=readme,
