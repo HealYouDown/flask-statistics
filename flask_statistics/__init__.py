@@ -1,9 +1,10 @@
 import datetime
 import time
 
-from flask import Flask, Response, g, request
+from flask import Flask, Response, g, request, render_template, Blueprint
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.schema import Table
+from flask_sqlalchemy import Model
+from .utils import StatisticsQueries
 
 
 class Statistics:
@@ -11,7 +12,7 @@ class Statistics:
         self,
         app: Flask = None,
         db: SQLAlchemy = None,
-        model: Table = None
+        model: Model = None
     ):
 
         if (app is not None and db is not None
@@ -20,13 +21,21 @@ class Statistics:
 
     def init_app(
         self,
-        app=None,
-        db=None,
-        model=None
+        app: Flask,
+        db: SQLAlchemy,
+        model: Model,
     ) -> None:
+        """Initalizes extensions."""
         self.app = app
         self.db = db
         self.model = model
+
+        self.api = StatisticsQueries(self.db, self.model)
+
+        # Config variables
+        self.date_span = self.app.config.get(
+            "STATISTICS_DEFAULT_DATE_SPAN", datetime.timedelta(days=7))
+        
 
         # Register function that runs before / after each request
         # These functions are used to collect the data
@@ -34,9 +43,78 @@ class Statistics:
         self.app.after_request(self.after_request)
         self.app.teardown_request(self.teardown_request)
 
+        # Blueprint
+        self._blueprint = Blueprint("statistics", __name__, template_folder="./templates",
+                                   url_prefix="/statistics")
+        self._blueprint.add_url_rule("/", "index", self.index_view)
+        self.app.register_blueprint(self._blueprint)
+
+    @property
+    def blueprint(self) -> Blueprint:
+        return self._blueprint
+
+    def index_view(self):
+        path = request.args.get("path", None)
+
+        start = request.args.get("start", None)
+        end = request.args.get("end", None)
+
+        # Parse passed input
+        if start and end is not None:
+            start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
+            end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+
+        else:
+            # Default show statistics from span set in config until today 
+            current_date = datetime.datetime.utcnow()
+
+            start_date = current_date - self.date_span
+            end_date = current_date
+
+        # To include the whole end day, we have to set the day to 1 ms before midnight
+        end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=59)
+
+        # Overview for all routes
+        if path is None:
+            routes = self.api.get_routes_data(start_date,
+                                              end_date)
+
+            user_chart_data = self.api.get_user_chart_data(start_date,
+                                                           end_date)
+
+            hits = sum([route.hits for route in routes])
+            unique_users = self.api.get_number_of_unique_visitors(start_date,
+                                                                 end_date)
+
+            return render_template("index.html",
+                                   routes=routes,
+                                   hits=hits,
+                                   unique_users=unique_users,
+                                   user_chart_data=user_chart_data,
+                                   start_date=str(start_date.date()),
+                                   end_date=str(end_date.date()))
+
+
+        # Single stats for a specifc path
+        requests = self.api.get_requests_for_path(path,
+                                                  start_date,
+                                                  end_date)
+
+        user_chart_data = self.api.get_user_chart_data(start_date,
+                                                       end_date,
+                                                       path)
+
+        return render_template("single_view.html",
+                               path=path,
+                               requests=requests,
+                               user_chart_data=user_chart_data,
+                               start_date=str(start_date.date()),
+                               end_date=str(end_date.date()))
+
     def before_request(
         self
     ) -> None:
+        """Function that is called before a request is processed."""
         # Take time when request started
         g.start_time = time.time()
         g.request_date = datetime.datetime.utcnow()
@@ -49,6 +127,7 @@ class Statistics:
         self,
         response: Response
     ) -> Response:
+        """Function that is called after a request was processed."""
         g.request_status_code = response.status_code
         g.request_content_size = response.content_length
         g.mimetype = response.mimetype
@@ -59,6 +138,8 @@ class Statistics:
         self,
         exception: Exception = None
     ) -> None:
+        """Function that is called after a request, whether it was successful 
+        or not."""
         # Take time when request ended
         end_time = time.time()
 

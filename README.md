@@ -1,7 +1,7 @@
 
 # Flask-Statistics
 
-Flask-Statistics is an extensions that collects all necessary data from requests to display statistics like response-time, hits per day / week, ...
+Flask-Statistics is an extensions that collects data from requests send to the server to then display statistics like response-time, hits, unique hits, etc.
 
 ## Installation
 You can install the extensions with pip:
@@ -70,3 +70,13 @@ Now, whenever a user requests an endpoint, it will be stored in the defined mode
 |browser|```str```|The browser that was used to send the request. <br/> Example: ```firefox 72.0```|
 |platform|```str```|Operating System the request was send from.|
 |mimetype|```str```|Mimetype of the response send to the client (e.g. html/text).|
+
+## View the statistics
+Flask-Statistics will add a blueprint with the prefix ```../statistics``` to your app.
+
+->IMAGE<-
+
+### Config
+|Name|Type|Description|Default|
+|--|--|--|--|
+|STATISTICS_DEFAULT_DATE_SPAN|```datetime.timedelta```|If no date was selected, it will be set to today as end and today - option as start.|```datetime.timedelta(days=7)```
