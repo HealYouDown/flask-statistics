@@ -5,6 +5,7 @@ from flask import Flask, Response, g, request, render_template, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_sqlalchemy import Model
 from .utils import StatisticsQueries
+from typing import Callable
 
 
 class Statistics:
@@ -12,18 +13,20 @@ class Statistics:
         self,
         app: Flask = None,
         db: SQLAlchemy = None,
-        model: Model = None
+        model: Model = None,
+        before_f: Callable = None,
     ):
 
         if (app is not None and db is not None
                 and model is not None):
-            self.init_app(app, db, model)
+            self.init_app(app, db, model, before_f)
 
     def init_app(
         self,
         app: Flask,
         db: SQLAlchemy,
         model: Model,
+        before_f: Callable = None,
     ) -> None:
         """Initalizes extensions."""
         self.app = app
@@ -44,14 +47,12 @@ class Statistics:
         self.app.teardown_request(self.teardown_request)
 
         # Blueprint
-        self._blueprint = Blueprint("statistics", __name__, template_folder="./templates",
+        self.blueprint = Blueprint("statistics", __name__, template_folder="./templates",
                                    url_prefix="/statistics")
-        self._blueprint.add_url_rule("/", "index", self.index_view)
-        self.app.register_blueprint(self._blueprint)
-
-    @property
-    def blueprint(self) -> Blueprint:
-        return self._blueprint
+        self.blueprint.add_url_rule("/", "index", self.index_view)
+        if before_f is not None:
+            self.blueprint.before_request(before_f)
+        self.app.register_blueprint(self.blueprint)
 
     def index_view(self):
         path = request.args.get("path", None)

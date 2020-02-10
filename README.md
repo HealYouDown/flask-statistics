@@ -80,3 +80,21 @@ Flask-Statistics will add a blueprint with the prefix ```../statistics``` to you
 |Name|Type|Description|Default|
 |--|--|--|--|
 |STATISTICS_DEFAULT_DATE_SPAN|```datetime.timedelta```|If no date was selected, it will be set to today as end and today - option as start.|```datetime.timedelta(days=7)```
+
+## Protect the route
+Flask-Statistics accepts a fourth argument: A function that is called before any requests to the statistics blueprint.
+
+```py
+...
+
+def check_if_user_is_allowed():
+    # check if user is allowed to
+    # e.g. JWT Token, Flask Login etc.
+    # ...
+    if not allowed:
+        return redirect(url_for("index"))
+
+statistics = Statistics(app, db, Request, check_if_user_is_allowed)
+```
+
+There you can check if the user has the required permissions to view the statistics. If not, redirect him to another page.
