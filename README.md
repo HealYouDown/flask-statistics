@@ -74,7 +74,7 @@ Now, whenever a user requests an endpoint, it will be stored in the defined mode
 ## View the statistics
 Flask-Statistics will add a blueprint with the prefix ```../statistics``` to your app.
 
-->IMAGE<-
+![preview_image](https://i.imgur.com/0P3y7E7.png)
 
 ### Config
 |Name|Type|Description|Default|
