@@ -193,7 +193,9 @@ class Statistics:
                 obj["zip_code"] = none_if_empty("zip_code")
                 obj["time_zone"] = none_if_empty("time_zone")
         """
+        self.add_to_db(obj)
 
+    def add_to_db(self, obj):
         # Adds object to db and saves
         self.db.session.add(
             self.model(**obj)
