@@ -15,11 +15,12 @@ class Statistics:
         db: SQLAlchemy = None,
         model: Model = None,
         before_f: Callable = None,
+        **kwargs
     ):
 
         if (app is not None and db is not None
                 and model is not None):
-            self.init_app(app, db, model, before_f)
+            self.init_app(app, db, model, before_f, **kwargs)
 
     def init_app(
         self,
@@ -27,6 +28,7 @@ class Statistics:
         db: SQLAlchemy,
         model: Model,
         before_f: Callable = None,
+        **kwargs
     ) -> None:
         """Initalizes extensions."""
         self.app = app
@@ -53,6 +55,9 @@ class Statistics:
         if before_f is not None:
             self.blueprint.before_request(before_f)
         self.app.register_blueprint(self.blueprint)
+
+        if "disable_f" in kwargs:
+            self.disable_f = kwargs["disable_f"]
 
     def index_view(self):
         path = request.args.get("path", None)
@@ -116,6 +121,10 @@ class Statistics:
         self
     ) -> None:
         """Function that is called before a request is processed."""
+
+        if self.disable_f():
+            return None
+
         # Take time when request started
         g.start_time = time.time()
         g.request_date = datetime.datetime.utcnow()
@@ -129,6 +138,10 @@ class Statistics:
         response: Response
     ) -> Response:
         """Function that is called after a request was processed."""
+
+        if self.disable_f():
+            return response
+
         g.request_status_code = response.status_code
         g.request_content_size = response.content_length
         g.mimetype = response.mimetype
@@ -141,6 +154,10 @@ class Statistics:
     ) -> None:
         """Function that is called after a request, whether it was successful 
         or not."""
+
+        if self.disable_f():
+            return None
+
         # Take time when request ended
         end_time = time.time()
 
@@ -199,3 +216,7 @@ class Statistics:
             self.model(**obj)
         )
         self.db.session.commit()
+
+    def disable_f(self):
+        """ Return False if this request should be recorded. Can be overridden by user. """
+        return False
