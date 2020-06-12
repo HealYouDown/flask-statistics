@@ -51,7 +51,7 @@ if  __name__ == "__main__":
 The script above sets up a basic SQLAlchemy Database.
 When initalizing the statistics extensions, you will have to provide a model (here: ```Request```) to store the data in.
 
-Now, whenever a user requests an endpoint, it will be stored in the defined model. 
+Now, whenever a user requests an endpoint, it will be stored in the defined model.
 
 > If you are in debug mode and an exception occures, teardown of the request will not happen and therefore it won't be stored in the database. If you want to teardown it by force, set ```PRESERVE_CONTEXT_ON_EXCEPTION``` to False in the config.
 
@@ -98,3 +98,16 @@ statistics = Statistics(app, db, Request, check_if_user_is_allowed)
 ```
 
 There you can check if the user has the required permissions to view the statistics. If not, redirect him to another page.
+
+## Disable statistics
+If a user has opt-out, request record can be disabled with custom function `disable_f`.
+```
+statistics = Statistics(app, db, Request, disable_f= lambda: current_user.has_optout() )
+```
+or
+```
+def has_disable_cookie():
+    return request.cookies.get('disable_stat') == 'True'
+
+statistics = Statistics(app, db, Request, disable_f=has_disable_cookie )
+```
