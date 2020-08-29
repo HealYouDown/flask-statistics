@@ -40,7 +40,7 @@ class Statistics:
         # Config variables
         self.date_span = self.app.config.get(
             "STATISTICS_DEFAULT_DATE_SPAN", datetime.timedelta(days=7))
-        
+
 
         # Register function that runs before / after each request
         # These functions are used to collect the data
@@ -71,7 +71,7 @@ class Statistics:
             end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
 
         else:
-            # Default show statistics from span set in config until today 
+            # Default show statistics from span set in config until today
             current_date = datetime.datetime.utcnow()
 
             start_date = current_date - self.date_span
@@ -152,70 +152,73 @@ class Statistics:
         self,
         exception: Exception = None
     ) -> None:
-        """Function that is called after a request, whether it was successful 
+        """Function that is called after a request, whether it was successful
         or not."""
 
-        if self.disable_f():
-            return None
+        try:
+            if self.disable_f():
+                return None
 
-        # Take time when request ended
-        end_time = time.time()
+            # Take time when request ended
+            end_time = time.time()
 
-        # Create object that is later stored in database
-        obj = {}
+            # Create object that is later stored in database
+            obj = {}
 
-        # the time to finish the request
-        obj["response_time"] = end_time - g.start_time
-        # the returned status code
-        obj["status_code"] = g.request_status_code
-        # body response size in bytes
-        obj["size"] = g.request_content_size
-        # used method (PUT, PATCH, GET, POST, ...)
-        obj["method"] = request.method
-        # ip address
-        obj["remote_address"] = request.environ.get("HTTP_X_REAL_IP", request.remote_addr)
-        # requested path (e.g. /homepage, /about, ...)
-        obj["path"] = request.path
-        # page that linked to requested page
-        obj["referrer"] = request.referrer
-        # browser and version
-        obj["browser"] = "{browser} {version}".format(
-            browser=request.user_agent.browser,
-            version=request.user_agent.version)
-        # platform (e.g. windows)
-        obj["platform"] = request.user_agent.platform
-        # complete user agent string
-        obj["user_agent"] = request.user_agent.string
-        # date when request was send
-        obj["date"] = g.request_date
-        # mimetype (e.g. text/html) of the response send to the client
-        obj["mimetype"] = g.mimetype
-        # exception (if there was one)
-        obj["exception"] = None if exception is None else repr(exception)
+            # the time to finish the request
+            obj["response_time"] = end_time - g.start_time
+            # the returned status code
+            obj["status_code"] = g.request_status_code
+            # body response size in bytes
+            obj["size"] = g.request_content_size
+            # used method (PUT, PATCH, GET, POST, ...)
+            obj["method"] = request.method
+            # ip address
+            obj["remote_address"] = request.environ.get("HTTP_X_REAL_IP", request.remote_addr)
+            # requested path (e.g. /homepage, /about, ...)
+            obj["path"] = request.path
+            # page that linked to requested page
+            obj["referrer"] = request.referrer
+            # browser and version
+            obj["browser"] = "{browser} {version}".format(
+                browser=request.user_agent.browser,
+                version=request.user_agent.version)
+            # platform (e.g. windows)
+            obj["platform"] = request.user_agent.platform
+            # complete user agent string
+            obj["user_agent"] = request.user_agent.string
+            # date when request was send
+            obj["date"] = g.request_date
+            # mimetype (e.g. text/html) of the response send to the client
+            obj["mimetype"] = g.mimetype
+            # exception (if there was one)
+            obj["exception"] = None if exception is None else repr(exception)
 
-        """
-        # Gets geo data based of ip
-        url = "https://freegeoip.app/json/{0}".format(request.remote_addr)
-        with requests.get(url) as req:
-            if req.status_code != 403:  # 403 means rate limted was reached
-                resp = req.json()
+            """
+            # Gets geo data based of ip
+            url = "https://freegeoip.app/json/{0}".format(request.remote_addr)
+            with requests.get(url) as req:
+                if req.status_code != 403:  # 403 means rate limted was reached
+                    resp = req.json()
 
-                none_if_empty = lambda s: None if resp.get(s) == "" else resp.get(s)  # noqa F731
+                    none_if_empty = lambda s: None if resp.get(s) == "" else resp.get(s)  # noqa F731
 
-                obj["country_code"] = none_if_empty("country_code")
-                obj["country_name"] = none_if_empty("country_name")
-                obj["region_code"] = none_if_empty("region_code")
-                obj["region_name"] = none_if_empty("region_name")
-                obj["city"] = none_if_empty("city")
-                obj["zip_code"] = none_if_empty("zip_code")
-                obj["time_zone"] = none_if_empty("time_zone")
-        """
+                    obj["country_code"] = none_if_empty("country_code")
+                    obj["country_name"] = none_if_empty("country_name")
+                    obj["region_code"] = none_if_empty("region_code")
+                    obj["region_name"] = none_if_empty("region_name")
+                    obj["city"] = none_if_empty("city")
+                    obj["zip_code"] = none_if_empty("zip_code")
+                    obj["time_zone"] = none_if_empty("time_zone")
+            """
 
-        # Adds object to db and saves
-        self.db.session.add(
-            self.model(**obj)
-        )
-        self.db.session.commit()
+            # Adds object to db and saves
+            self.db.session.add(
+                self.model(**obj)
+            )
+            self.db.session.commit()
+        except Exception as e:
+            self.app.logger.warning("Error in flask-statistics teardown: " + str(e))
 
     def disable_f(self):
         """ Return False if this request should be recorded. Can be overridden by user. """
