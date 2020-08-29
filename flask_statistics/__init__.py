@@ -218,7 +218,7 @@ class Statistics:
             )
             self.db.session.commit()
         except Exception as e:
-            self.app.logger.warning("Error in flask-statistics teardown: "+str(e))
+            self.app.logger.warning("Error in flask-statistics teardown: " + str(e))
 
     def disable_f(self):
         """ Return False if this request should be recorded. Can be overridden by user. """
