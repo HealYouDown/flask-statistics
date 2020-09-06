@@ -6,7 +6,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_sqlalchemy import Model
 from .utils import StatisticsQueries
 from typing import Callable
-
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 class Statistics:
     def __init__(
@@ -40,6 +41,8 @@ class Statistics:
         # Config variables
         self.date_span = self.app.config.get(
             "STATISTICS_DEFAULT_DATE_SPAN", datetime.timedelta(days=7))
+        self.cleanup_days = self.app.config.get(
+            "STATISTICS_CLEANUP_DAYS", datetime.timedelta(days=60))
 
 
         # Register function that runs before / after each request
@@ -58,6 +61,12 @@ class Statistics:
 
         if "disable_f" in kwargs:
             self.disable_f = kwargs["disable_f"]
+
+        if self.cleanup_days != None:
+            self.scheduler = BackgroundScheduler()
+            cron = self.app.config.get("STATISTICS_CLEANUP_CRON", CronTrigger(second=0, minute=26, hour=0))
+            self.scheduler.add_job(self.cleanup, trigger=cron)
+            self.scheduler.start()
 
     def index_view(self):
         path = request.args.get("path", None)
@@ -223,3 +232,15 @@ class Statistics:
     def disable_f(self):
         """ Return False if this request should be recorded. Can be overridden by user. """
         return False
+
+    def cleanup(self):
+        """ Remove old requests in db """
+
+        if self.cleanup_days == None:
+            return
+
+        self.app.logger.info('Flask-statistics: cleanup of old requests in db')
+
+        expiration_date = datetime.datetime.now() - self.cleanup_days
+        self.db.session.query(self.model).filter(self.model.date < expiration_date).delete()
+        self.db.session.commit()
