@@ -82,6 +82,8 @@ Flask-Statistics will add a blueprint with the prefix ```../statistics``` to you
 |Name|Type|Description|Default|
 |--|--|--|--|
 |STATISTICS_DEFAULT_DATE_SPAN|```datetime.timedelta```|If no date was selected, it will be set to today as end and today - option as start.|```datetime.timedelta(days=7)```
+|STATISTICS_CLEANUP_DAYS|```datetime.timedelta```|Time to keep request in database before cleanup|```datetime.timedelta(days=60)```
+|STATISTICS_CLEANUP_CRON|```apscheduler.triggers.cron.CronTrigger```|When cleanup will be done. Default: once a day at 00:26|```CronTrigger(second=0, minute=26, hour=0)```
 
 ## Protect the route
 Flask-Statistics accepts a fourth argument: A function that is called before any requests to the statistics blueprint.
