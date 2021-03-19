@@ -38,6 +38,8 @@ class Request(db.Model):
     platform = db.Column(db.String)
     mimetype = db.Column(db.String)
 
+db.create_all()
+
 statistics = Statistics(app, db, Request)
 
 @app.route("/")
